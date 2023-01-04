@@ -5,9 +5,16 @@ import { format } from "date-fns";
 
 export default function Reservations() {
   let [quotationData, setQuotationData] = useState(null);
+  let [quotationData2, setQuotationData2] = useState(null);
+  let [quotationData3, setQuotationData3] = useState(null);
+  let [quotationData4, setQuotationData4] = useState(null);
+  let [quotationData5, setQuotationData5] = useState(null);
+  let [quotationData6, setQuotationData6] = useState(null);
   let [quotationDataComplete, setQuotationDataComplete] = useState([]);
   let [quotationUser, setQuotationUser] = useState();
   let [quotationBasic, setQuotationBasic] = useState();
+  let [sku, setQuotationSku] = useState();
+  let [destinationZipcode, setQuotationZipCode] = useState();
   let [isError, setError] = useState(false);
 
   const apiCall = (event) => {
@@ -15,20 +22,20 @@ export default function Reservations() {
 
     fetch(url, {
       headers: new Headers({
-        Authorization: `${quotationBasic}`,
-        //process.env.NEXT_PUBLIC_LE_AUTH,
+        //Authorization: `${quotationBasic}`,
+        Authorization: process.env.NEXT_PUBLIC_LE_AUTH,
         "Content-Type": "application/json",
       }),
       body: JSON.stringify({
         clientId: "lepostiche",
         channelId: "site",
-        destinationZipcode: "11451365",
+        destinationZipcode: destinationZipcode,
         groups: {
           group1: {
             items: {
-              4039623006431: {
-                sku: "4039623006431",
-                quantity: 5,
+              sku: {
+                sku: sku,
+                quantity: 1,
                 price: 99.99,
                 basePrice: 99.99,
                 weight: 3200.0,
@@ -36,7 +43,6 @@ export default function Reservations() {
                 width: 760.0,
                 length: 195.0,
                 stockType: "PHYSICAL",
-                stockKeepUnitId: 748,
               },
             },
           },
@@ -51,7 +57,24 @@ export default function Reservations() {
           throw new Error("Dados Incorretos");
         }
       })
-      .then((result) => setQuotationData(result.quoteId))
+      .then(
+        (result) => (
+          setQuotationData(result.quoteId),
+          setQuotationData2(
+            result.groups.group1.pickupExceptions[0].locationId
+          ),
+          setQuotationData3(
+            result.groups.group1.pickupExceptions[0].items[0].totalAvailable
+          ),
+          setQuotationData4(
+            result.groups.group1.shipmentExceptions[0].methodName
+          ),
+          setQuotationData5(result.groups.group1.shipmentExceptions[0].message),
+          setQuotationData6(
+            result.groups.group1.shipmentExceptions[0].items[0].totalAvailable
+          )
+        )
+      )
       .catch((error) => setError(true));
   };
 
@@ -81,6 +104,26 @@ export default function Reservations() {
             onChange={(event) => setQuotationBasic(event.target.value)}
           ></input>
         </label>
+        <label type="text">
+          SKU:
+          <input
+            className={styles.card}
+            required={true}
+            type="text"
+            value={sku}
+            onChange={(event) => setQuotationSku(event.target.value)}
+          ></input>
+        </label>
+        <label type="text">
+          CEP:
+          <input
+            className={styles.card}
+            required={true}
+            type="text"
+            value={destinationZipcode}
+            onChange={(event) => setQuotationZipCode(event.target.value)}
+          ></input>
+        </label>
         <button className={styles.card} onClick={apiCall}>
           Verificar
         </button>
@@ -93,12 +136,19 @@ export default function Reservations() {
       ) : (
         <div className={styles.grid}>
           <div className={styles.card}>
-           <span>QuoteId: {quotationData}</span> <br />
+            <span>QuoteId: {quotationData}</span> <br />
+            <span>Pickups:</span> <br />
+            <span>Pickup Location: {quotationData2}</span> <br />
+            <span>Itens Disponíveis: {quotationData3}</span> <br />
+            <span>Shipment:</span> <br />
+            <span>Método de Entrega: {quotationData4}</span> <br />
+            <span>Mensagem: {quotationData5}</span> <br />
+            <span>Total Disponível: {quotationData6}</span> <br />
             <br />
             {quotationDataComplete.map((quote) => (
-              < div
+              <div
                 className={styles.card}
-                key={quote.groups.group1.shipment[1]}
+                key={quote.groups.group1.shipment.GUID.id}
               >
                 <span>Price: {quote.shipment.price}</span> <br />
                 <br />
